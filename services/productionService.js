@@ -97,6 +97,26 @@ class ProductionService {
     }
   }
 
+
+  // Get distinct workcenters
+async getDistinctWorkcenters() {
+  try {
+    const pool = await connectToDatabase();
+    
+    const result = await pool.request()
+      .query(`
+        SELECT DISTINCT workcenter
+        FROM ProductionSummary
+        ORDER BY workcenter
+      `);
+    
+    // Make sure to return an array of strings, not concatenated values
+    return result.recordset.map(record => record.workcenter);
+  } catch (error) {
+    console.error('Error fetching distinct workcenters:', error);
+    throw error;
+  }
+}
   // Updated: Format the data for the dashboard with improved time slot handling
   formatProductionData(records) {
     // Get unique workcenters
