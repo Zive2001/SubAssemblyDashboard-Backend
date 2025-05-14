@@ -1,6 +1,4 @@
-// Updated formatProductionData method for ProductionService class
-
-// Full class with updated method
+// services/productionService.js
 const { connectToDatabase, sql } = require('../config/db');
 const { mapTimeSlotToPosition } = require('../utils/timeSlotMapper');
 
@@ -97,27 +95,26 @@ class ProductionService {
     }
   }
 
-
   // Get distinct workcenters
-async getDistinctWorkcenters() {
-  try {
-    const pool = await connectToDatabase();
-    
-    const result = await pool.request()
-      .query(`
-        SELECT DISTINCT workcenter
-        FROM ProductionSummary
-        ORDER BY workcenter
-      `);
-    
-    // Make sure to return an array of strings, not concatenated values
-    return result.recordset.map(record => record.workcenter);
-  } catch (error) {
-    console.error('Error fetching distinct workcenters:', error);
-    throw error;
+  async getDistinctWorkcenters() {
+    try {
+      const pool = await connectToDatabase();
+      
+      const result = await pool.request()
+        .query(`
+          SELECT DISTINCT workcenter
+          FROM ProductionSummary
+          ORDER BY workcenter
+        `);
+      
+      return result.recordset.map(record => record.workcenter);
+    } catch (error) {
+      console.error('Error fetching distinct workcenters:', error);
+      throw error;
+    }
   }
-}
-  // Updated: Format the data for the dashboard with improved time slot handling
+
+  // Format the data for the dashboard
   formatProductionData(records) {
     // Get unique workcenters
     const workcenters = [...new Set(records.map(record => record.workcenter))].sort();
@@ -128,9 +125,11 @@ async getDistinctWorkcenters() {
       Evening: Array(8).fill(0).map(() => Object.fromEntries(workcenters.map(wc => [wc, 0])))
     };
     
-    // Fill in the data with better time slot handling
+    // Fill in the data
     records.forEach(record => {
       const { shift, timeSlot, workcenter, totalQuantity } = record;
+      
+      if (!shift || !timeSlot || !workcenter) return;
       
       // Get the position based on the time slot mapping
       const position = mapTimeSlotToPosition(timeSlot, shift);
@@ -138,8 +137,7 @@ async getDistinctWorkcenters() {
       // Handle the special case for 'Other' time slots
       if (timeSlot === 'Other') {
         console.log(`Found 'Other' time slot data for ${workcenter} with quantity ${totalQuantity}`);
-        // You could assign this to a specific time slot position or distribute it
-        // For now, let's assign it to the last time slot (8) for visibility
+        // Assign to the last time slot (8) for visibility
         if (shift === 'Morning' || shift === 'Evening') {
           formattedData[shift][7][workcenter] = 
             (formattedData[shift][7][workcenter] || 0) + totalQuantity;
@@ -147,14 +145,11 @@ async getDistinctWorkcenters() {
       } 
       // Handle regular mapped positions
       else if (position > 0 && position <= 8) {
-        // Add to existing quantity if there's already data for this position/workcenter
-        formattedData[shift][position-1][workcenter] = 
-          (formattedData[shift][position-1][workcenter] || 0) + totalQuantity;
+        // Add to existing quantity
+        const index = position - 1;
+        formattedData[shift][index][workcenter] = 
+          (formattedData[shift][index][workcenter] || 0) + totalQuantity;
       } 
-      // Log any unmapped time slots for debugging
-      else {
-        console.log(`Time slot '${timeSlot}' in shift '${shift}' could not be mapped to a position`);
-      }
     });
     
     return {

@@ -1,3 +1,4 @@
+//utils/timeSlotMapper.js
 // Updated time slots based on new requirements
 const morningTimeSlots = {
   '05:30-06:00': 1,
