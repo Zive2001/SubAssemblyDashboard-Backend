@@ -1,3 +1,4 @@
+// server.js (updated)
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -5,6 +6,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const apiRoutes = require('./routes/api');
 const productionService = require('./services/productionService');
+// Remove this line: const targetRoutes = require('./routes/targetRoutes');
 
 dotenv.config();
 

@@ -1,10 +1,60 @@
-// Add these new routes to your existing router
+// routes/api.js
 const express = require('express');
 const router = express.Router();
 const productionService = require('../services/productionService');
 const targetService = require('../services/targetService');
 
-// Existing routes...
+// Get current production data
+router.get('/production', async (req, res) => {
+  try {
+    const data = await productionService.getCurrentProductionData();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Refresh production data manually
+router.post('/refresh', async (req, res) => {
+  try {
+    await productionService.refreshProductionData();
+    const data = await productionService.getCurrentProductionData();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get production data for a specific date
+router.get('/production/:date', async (req, res) => {
+  try {
+    const date = req.params.date;
+    const data = await productionService.getProductionDataByDate(date);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get available dates with production data
+router.get('/available-dates', async (req, res) => {
+  try {
+    const dates = await productionService.getAvailableDates();
+    res.json(dates);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get distinct workcenters
+router.get('/workcenters', async (req, res) => {
+  try {
+    const workcenters = await productionService.getDistinctWorkcenters();
+    res.json(workcenters);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Set a target for a workcenter with optional time slot specific targets
 router.post('/targets', async (req, res) => {
